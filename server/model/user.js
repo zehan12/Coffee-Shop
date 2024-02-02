@@ -1,34 +1,32 @@
-const mongoose = require('mongoose');
-const passportLocalMongoose = require('passport-local-mongoose');
-const cart=require('./cart');
-
-main()
-.then((res)=>{console.log("Connection is up")})
-.catch(err => console.log(err));
-
-async function main() {
-  await mongoose.connect('mongodb://127.0.0.1:27017/coffee');
-}
+const mongoose = require("mongoose");
+const passportLocalMongoose = require("passport-local-mongoose");
 
 // User Database Schema
-
 const userSchema = new mongoose.Schema({
-  phone:{
-    type:Number,
-    require:true,
-    min:1000000000,
-    max:9999999999,
+  phone: {
+    type: Number,
+    require: true,
+    minLength: 10,
+    maxLength: 15,
   },
-  email:{
-    type:String,
+  username: {
+    type: String,
+    require: true,
+    unique: true,
   },
-  cart:[{
-    type:mongoose.Schema.Types.ObjectId,
-    ref:"cart"
-  },],
+  email: {
+    type: String,
+  },
+  cart: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "cart",
+    },
+  ],
 });
 
 userSchema.plugin(passportLocalMongoose);
-const User=mongoose.model("user",userSchema);
 
-module.exports=User;
+const User = mongoose.model("user", userSchema);
+
+module.exports = User;

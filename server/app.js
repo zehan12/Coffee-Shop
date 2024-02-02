@@ -1,49 +1,61 @@
-const express = require('express');
-const app=express();
-const path =require('path');
-const port =3000;
-const session = require('express-session');
-const passport = require('passport');
-const locatStrategy=require('passport-local');
-const cors=require('cors');
-const cookieParser = require('cookie-parser');
+const express = require("express");
+const app = express();
+const port = 3000;
+const session = require("express-session");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const connectDatabase = require("./config/database.js");
 
+const User = require("./model/user");
 
-const User=require('./model/user');
+const authRoute = require("./routs/auth.js");
+const cartRouter = require("./routs/cart.js");
 
-const auth=require('./routs/auth.js');
-const cart=require('./routs/cart.js');
+// connect to database
+connectDatabase();
 
-app.use(express.urlencoded({extended:true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cors());
 
-app.use(passport.initialize());
-app.use(cookieParser("secretcode"))
+const corsOptions = {
+  optionsSuccessStatus: 200,
+  credentials: true,
+};
 
-const sessionOption={
-  secret: 'keyboard cat',
+app.use(cors(corsOptions));
+
+app.use(cookieParser("secretcode"));
+
+const sessionOption = {
+  secret: "keyboard cat",
   resave: true,
   saveUninitialized: true,
   cookie: {
-    expires:Date.now()+1000*60*60*24*3,
-    maxAge: 1000*60*60*24*3,
-    httpOnly:true,
-  }
-}
+    expires: Date.now() + 1000 * 60 * 60 * 24 * 3,
+    maxAge: 1000 * 60 * 60 * 24 * 3,
+    httpOnly: true,
+  },
+};
 
 app.use(session(sessionOption));
-app.use(passport.session());
 
-passport.use(new locatStrategy(User.authenticate()));
+passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-app.use('/auth',auth);
-app.use('/cart',cart);
+app.use(passport.initialize());
+app.use(passport.session());
 
-
-app.listen(port,()=>{
-    console.log("Port is Listening");
+app.use((req, res, next) => {
+  console.log(req.method, req.url,req.session);
+  next();
 });
 
+app.use("/auth", authRoute);
+app.use("/cart", cartRouter);
+
+app.listen(port, () => {
+  console.log(`Port ${port} is Listening`);
+});
